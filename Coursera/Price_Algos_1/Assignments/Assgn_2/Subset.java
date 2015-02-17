@@ -24,7 +24,6 @@ public class Subset {
                  * the string to an existing evict and insert 
                  * incoming string.
                  */
-                 */
                 int randidx = StdRandom.uniform(N);
                 if(randidx < k) {
                     rq.dequeue();

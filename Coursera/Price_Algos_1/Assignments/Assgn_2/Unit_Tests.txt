@@ -1,0 +1,48 @@
+    // unit testing randomized Queues
+    public static void main(String[] args) {
+        RandomizedQueue<Integer> rq = new RandomizedQueue<Integer>();
+        
+        while(!StdIn.isEmpty()) {
+            int item = StdIn.readInt();
+            rq.enqueue(item);
+        }
+        
+        
+        for(Integer item : rq) {
+            StdOut.println("Iterator1");
+            StdOut.println(item);
+            StdOut.println("Iterator2");
+            for(Integer item2 : rq) {
+                StdOut.println(item2);
+            }
+        }
+        
+        StdOut.println("Dequeue");
+        while(!rq.isEmpty()) {
+            int item = rq.dequeue();
+            StdOut.println(item);
+        }
+    }
+    
+
+
+    /* Unit Test Dequeue */
+    public static void main(String[] args) {
+        Dequeue<Integer> deq = new Dequeue<Integer>();
+        
+        while(!StdIn.isEmpty()) {
+            int item = StdIn.readInt();
+            deq.addLast(item);
+        }
+        
+        deq.addLast(null);
+        
+        for(Integer item : deq) {
+            StdOut.println(item);
+        }
+        
+        while(!deq.isEmpty()) {
+            int item = deq.removeLast();
+            StdOut.println(item);
+        }
+    }
