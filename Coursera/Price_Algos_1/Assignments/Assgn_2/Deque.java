@@ -21,7 +21,8 @@ public class Deque<Item> implements Iterable<Item> {
     
     // Construct an empty Dequeue
     public Deque() {
-        first = last = null;
+        first = null;
+        last = null;
         N = 0;
     }
     
@@ -37,15 +38,17 @@ public class Deque<Item> implements Iterable<Item> {
     
     // add the item to the front
     public void addFirst(Item item) {
-        if(item == null) {
+        if (item == null) {
             throw new NullPointerException("Null Item Passed");
         }
         Node newnode = new Node();
         newnode.item = item;
         newnode.next = first;
         newnode.prev = null;
-        if(isEmpty()) 
-            last = first = newnode;
+        if (isEmpty()) {
+            last = newnode;
+            first = newnode;
+        }
         else {
             first.prev = newnode;
             first = newnode;
@@ -56,18 +59,18 @@ public class Deque<Item> implements Iterable<Item> {
     
     // add the item to the end
     public void addLast(Item item) {
-        if(item == null) {
-            throw new NullPointerException("Null Item Passed");
-        }
+        if (item == null) throw new NullPointerException("Null Item Passed");
         Node newnode = new Node();
         newnode.item = item;
         newnode.next = null;
         newnode.prev = last;
-        if(isEmpty()) 
-            first = last = newnode;
+        if (isEmpty()) {
+            first = newnode;
+            last = newnode;
+        }
         else {
             last.next = newnode;
-            last = last = newnode;;
+            last = newnode;
         }
         
         N++;
@@ -75,12 +78,11 @@ public class Deque<Item> implements Iterable<Item> {
     
     // remove and return the item from the front
     public Item removeFirst() {
-       if(isEmpty())
-           throw new NoSuchElementException("Dequeue Underflow");
+       if (isEmpty())  throw new NoSuchElementException("Dequeue Underflow");
        Item item = first.item;
        first = first.next;
        N--;
-       if(isEmpty())
+       if (isEmpty())
            last = first;
        else
            first.prev = null;
@@ -89,12 +91,12 @@ public class Deque<Item> implements Iterable<Item> {
     
     // remove and return the item from the end
     public Item removeLast() {
-        if(isEmpty())
+        if (isEmpty())
             throw new NoSuchElementException("Dequeue Underflow");
         Item item = last.item;
         last = last.prev;
         N--;
-        if(isEmpty())
+        if (isEmpty())
             first = last;
         else 
             last.next = null;
@@ -122,7 +124,7 @@ public class Deque<Item> implements Iterable<Item> {
         }
         
         public Item next() {
-            if(!hasNext()) {
+            if (!hasNext()) {
                 throw new NoSuchElementException();
             }
             Item item = current.item;

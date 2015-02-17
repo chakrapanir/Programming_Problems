@@ -29,7 +29,7 @@ public class RandomizedQueue<Item> implements Iterable<Item> {
     private void resizeArray(int capacity) {
         assert capacity >= N;
         Item[] temparr = (Item[]) new Object[capacity];
-        for(int i = 0; i < N; i++) {
+        for (int i = 0; i < N; i++) {
             temparr[i] = q[i];
         }
         q = temparr;
@@ -37,28 +37,29 @@ public class RandomizedQueue<Item> implements Iterable<Item> {
     
     // add the item
     public void enqueue(Item item) {
-        if(N == q.length)  resizeArray(2*q.length);
+        if (item == null) throw new NullPointerException("Null Item Passed");
+        if (N == q.length)  resizeArray(2*q.length);
         q[last++] = item;
         N++;
     }
     
     // remove and return a random item
     public Item dequeue() {
-        if(isEmpty())  throw new NoSuchElementException("Queue Underflow");
+        if (isEmpty())  throw new NoSuchElementException("Queue Underflow");
         int randidx = StdRandom.uniform(N);
         Item item = q[randidx];
-        if(randidx != (last-1))  q[randidx] = q[last-1];
+        if (randidx != (last-1))  q[randidx] = q[last-1];
         q[last-1] = null;
         last--;
         N--;
         // Shrink the array when number of elements is one-quarter of array length
-        if(N > 0 && N == q.length/4)  resizeArray(q.length/2);
+        if (N > 0 && N == q.length/4)  resizeArray(q.length/2);
         return item;
     }
     
     // return (but do not remove) a random item
     public Item sample() {
-        if(isEmpty())  throw new NoSuchElementException("Queue Underflow");
+        if (isEmpty())  throw new NoSuchElementException("Queue Underflow");
         int randidx = StdRandom.uniform(N);
         Item item = q[randidx];
         return item;
@@ -75,7 +76,7 @@ public class RandomizedQueue<Item> implements Iterable<Item> {
         
         public RandomQueueIterator() {
             itrarr = (Item[]) new Object[N];
-            for(int j = 0; j < N; j++) 
+            for (int j = 0; j < N; j++) 
                 itrarr[j] = q[j];
             StdRandom.shuffle(itrarr);
         }

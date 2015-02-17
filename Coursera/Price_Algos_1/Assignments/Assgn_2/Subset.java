@@ -13,11 +13,11 @@ public class Subset {
         int N = 0;                          // Current input sequence size
         RandomizedQueue rq = new RandomizedQueue<String>();
         
-        while(!StdIn.isEmpty()) {
+        while (!StdIn.isEmpty()) {
             String item = StdIn.readString();
             N++;
             //Enqueue when input sequence length is less than k
-            if(N <= k)  rq.enqueue(item);
+            if (N <= k)  rq.enqueue(item);
             else {
                 /* When input sequence length is greater than k, 
                  * use reservoir sampling algorithm to choose 
@@ -25,14 +25,14 @@ public class Subset {
                  * incoming string.
                  */
                 int randidx = StdRandom.uniform(N);
-                if(randidx < k) {
+                if (randidx < k) {
                     rq.dequeue();
                     rq.enqueue(item);
                 }
             }
         }
         
-        while(!rq.isEmpty()) {
+        while (!rq.isEmpty()) {
             StdOut.println(rq.dequeue());
         }
     }
