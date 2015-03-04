@@ -41,14 +41,16 @@ public class Point implements Comparable<Point> {
 
     // slope between this point and that point
     public double slopeTo(Point that) {
+        // Degenerate Line Segment
+        if (equals (that)) return Double.NEGATIVE_INFINITY;
         // Horizontal Line
         if (this.y == that.y) return 0.0;
         // Vertical Line
         if (this.x == that.x) return Double.POSITIVE_INFINITY;
-        // Degenerate Line Segment
-        if (equals (that)) return Double.NEGATIVE_INFINITY;
+        double slope = (double)(that.y - this.y)/(double)(that.x - this.x);
         
-        return ((double)(that.y - this.y)/(double)(that.x - this.x));
+        //StdOut.println("Slope: "+slope);
+        return slope;
     }
 
     // is this point lexicographically smaller than that one?
@@ -56,8 +58,8 @@ public class Point implements Comparable<Point> {
     public int compareTo(Point that) {
         if (this.y < that.y) return -1;
         if (this.y > that.y) return +1;
-        if (this.x < that.y) return -1;
-        if (this.x > that.y) return +1;
+        if (this.x < that.x) return -1;
+        if (this.x > that.x) return +1;
         return 0;
     }
     
