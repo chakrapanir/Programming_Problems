@@ -14,13 +14,15 @@
 import java.util.Arrays;
     
 public class Fast {
+    private static boolean less(Point v, Point w) {
+        return v.compareTo(w) < 0;
+    }
+    
+    private static boolean equals(Point v, Point w) {
+        return v.compareTo(w) == 0;
+    }
+    
     public static void main(String[] args) {
-        // rescale coordinates and turn on animation mode
-        StdDraw.setXscale(0, 32768);
-        StdDraw.setYscale(0, 32768);
-        StdDraw.show(0);
-        StdDraw.setPenRadius(0.01);  // make the points a bit larger
-
         // read in the input
         String filename = args[0];
         In in = new In(filename);
@@ -28,10 +30,18 @@ public class Fast {
         Point[] points;
         Point[] sortpoints;
         Point min;
-        Point max;
         
+        // Input points less than minimum required
+        if (N < 4) return;
         points = new Point[N];
         sortpoints = new Point[N];
+        
+        // rescale coordinates and turn on animation mode
+        StdDraw.setXscale(0, 32768);
+        StdDraw.setYscale(0, 32768);
+        StdDraw.show(0);
+        StdDraw.setPenRadius(0.01);  // make the points a bit larger
+        
         // Parse the input file and populate the points array
         for (int i = 0; i < N; i++) {
             int x = in.readInt();
@@ -45,35 +55,57 @@ public class Fast {
         // reset the pen radius
         StdDraw.setPenRadius();
         Arrays.sort(points);
-        for(int j = 0; j < N; j++) sortpoints[j] = points[j];
+        for (int i = 0; i < N; i++) 
+            sortpoints[i] = points[i];
         for (int i = 0; i < N; i++) {
-            StdOut.println("Sort w.r.t"+points[i].toString());
             Arrays.sort(sortpoints, points[i].SLOPE_ORDER);
             min = sortpoints[0];
-            max = sortpoints[0];
-            int collinearpoints = 1;
-            for (int k = 1; k < N-1; k++) {
-                StdOut.println(sortpoints[k].toString());
-                if (sortpoints[k].compareTo(min) == -1) min = sortpoints[k];
-                if (sortpoints[k].compareTo(max) == 1) max = sortpoints[k];
-                collinearpoints++;
-                if (points[i].slopeTo(sortpoints[k]) != points[i].slopeTo(sortpoints[k+1])) 
+            // tracks the number of collinear points
+            // including the reference point (points[i])
+            int collinearpoints = 1; 
+            for (int j = 1; j < N; j++) {
+                // Iterate over the slope sorted array and check if the 
+                // slope of the adjacent elements is the same.
+                if (points[i].slopeTo(sortpoints[j]) 
+                        != points[i].slopeTo(sortpoints[j-1])) 
                 {
-                    StdOut.println("Min"+min.toString());
-                    StdOut.println("Max"+max.toString());
-                    if (collinearpoints > 3 && points[i].equals(min)) {
+                    // Print and draw when the number of collinear points
+                    // is greater than 4 and the reference element is 
+                    // the minimum element. Ignore all other combinations.
+                    if (collinearpoints > 3 && equals(points[i], min)) 
+                    {
+                        int start = j - (collinearpoints - 1);
+                        Arrays.sort(sortpoints, start, j);
+                        StdOut.print(points[i].toString());
+                        for (int k = 0; k < collinearpoints-1; k++) {
+                            StdOut.print(" -> " + sortpoints[start + k]);
+                        }
+                        StdOut.print("\n");
                         StdDraw.setPenColor(StdDraw.BLUE);
-                        min.drawTo(max);
+                        points[i].drawTo(sortpoints[j-1]);
+                        // display to screen all
+                        StdDraw.show(0);
                     }
                     collinearpoints = 1;
                     min = sortpoints[0];
-                    max = sortpoints[0];
-                    continue;
                 }
+                if (less(sortpoints[j], min)) min = sortpoints[j];
+                collinearpoints++;
             }
-            
+            if (collinearpoints > 3 && equals(points[i], min))
+            {
+                int start = N - (collinearpoints - 1);
+                Arrays.sort(sortpoints, start, N);
+                StdOut.print(points[i].toString());
+                for (int k = 0; k < collinearpoints-1; k++) {
+                    StdOut.print(" -> " + sortpoints[start + k]);
+                }
+                StdOut.print("\n");
+                StdDraw.setPenColor(StdDraw.BLUE);
+                points[i].drawTo(sortpoints[N-1]);
+                // display to screen
+                StdDraw.show(0);
+            }
         }
-        // display to screen all at once
-        StdDraw.show(0);
     }
 }

@@ -42,12 +42,12 @@ public class Point implements Comparable<Point> {
     // slope between this point and that point
     public double slopeTo(Point that) {
         // Degenerate Line Segment
-        if (equals (that)) return Double.NEGATIVE_INFINITY;
+        if (compareTo(that) == 0) return Double.NEGATIVE_INFINITY;
         // Horizontal Line
         if (this.y == that.y) return 0.0;
         // Vertical Line
         if (this.x == that.x) return Double.POSITIVE_INFINITY;
-        double slope = (double)(that.y - this.y)/(double)(that.x - this.x);
+        double slope = (double) (that.y - this.y)/(double) (that.x - this.x);
         
         //StdOut.println("Slope: "+slope);
         return slope;
@@ -61,18 +61,6 @@ public class Point implements Comparable<Point> {
         if (this.x < that.x) return -1;
         if (this.x > that.x) return +1;
         return 0;
-    }
-    
-    /* Does this point equal the passed point
-     * @param other other point
-     * @return true if this point equals other; false otherwise
-     */
-    public boolean equals (Object other) {
-        if (other == this) return true;
-        if (other == null) return false;
-        if (other.getClass() != this.getClass()) return false;
-        Point that = (Point) other;
-        return this.x == that.x && this.y == that.y;
     }
     
     private class SlopeOrder implements Comparator<Point> 
