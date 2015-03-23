@@ -1,31 +1,30 @@
 public class Board {
-    private final short[][] tiles;    // N-by-N array of board blocks
-    private final int N;              // Board dimension
-    private int blankrow;             // rwo number where blank is present
-    private int blankcol;
-    private int hammingdistance;      // number of blocks in the wrong position
-    private int manhattandistance;    // sum of the Manhattan distances from 
-                                      // the blocks to their goal positions
+    private final short[] tiles;    // 1D array to store N-by-N array of board blocks
+    private final int N;          // Board dimension
+    private int blankidx;         // position where blank is present
+    private int hammingdistance;  // number of blocks in the wrong position
+    private int manhattandistance; // sum of the Manhattan distances from 
+                                   // the blocks to their goal positions
     
     // construct a board from an N-by-N array of blocks
     // (where blocks[i][j] = block in row i, column j)
     public Board(int[][] blocks) {
         N = blocks.length;
-        tiles = new short[N][N];
+        tiles = new short[N*N];
         hammingdistance = 0;
         manhattandistance = 0;
         
         for (int  i = 0; i < N; ++i) {
             for (int j = 0; j < N; ++j) {
                 short value = (short) blocks[i][j];
+                int tileidx = (i*N)+j;
                 
-                tiles[i][j] = value;
+                tiles[tileidx] = value;
                 if (value == 0) {
-                    blankrow = i;
-                    blankcol = j;
+                    blankidx = tileidx;
                 } else {
                     // Calculate hamming distance
-                    if (value != ((i * N) + j +1)) hammingdistance++;
+                    if (value != (tileidx +1)) hammingdistance++;
                     
                     // Calculate manhattan distance
                     int refrow = (value - 1) / N;
@@ -35,6 +34,40 @@ public class Board {
                 }
             }
         }           
+    }
+    
+    // Private Constructor for Twin
+    private Board(Board origboard, int swapidx1, int swapidx2) {
+        this.N = origboard.N;
+        tiles = new short[N*N];
+        hammingdistance = 0;
+        manhattandistance = 0;
+        
+        for (int i = 0; i < N; ++i) {
+            for (int j = 0; j < N; ++j) {
+                int tileidx = (i*N)+j;
+                short value;
+                if (tileidx == swapidx1) {
+                    value = origboard.tiles[swapidx2];
+                } else if (tileidx == swapidx2) {
+                    value = origboard.tiles[swapidx1];
+                } else {
+                    value = origboard.tiles[tileidx];
+                }
+                tiles[tileidx] = value;
+                if (value == 0) {
+                    blankidx = tileidx;
+                } else {
+                    // Calculate hamming distance
+                    if (value != tileidx+1) hammingdistance++;
+                
+                    // Calculate manhattan distance
+                    int refrow = (value - 1) / N;
+                    int refcol = (value - 1) % N;
+                    manhattandistance += Math.abs(i - refrow) + Math.abs(j - refcol);
+                }
+            }
+        }
     }
     
     // board dimension N
@@ -60,16 +93,13 @@ public class Board {
     
     // a board that is obtained by exchanging two adjacent blocks in the same row
     public Board twin() {
-        int[][] tempblocks = new int[N][N];
         Board twinboard;
         
-        copyBlocks(tempblocks);
-        if (blankrow != 0) {
-            exch(tempblocks, 0, 0, 0, 1);
+        if (blankidx < N) {
+            twinboard = new Board(this, N, N+1);
         } else {
-            exch(tempblocks, 1, 0, 1, 1);
+            twinboard = new Board(this, 0, 1);
         }
-        twinboard = new Board(tempblocks);
         return twinboard;
     }
     
@@ -88,51 +118,44 @@ public class Board {
         if (this.hammingdistance != that.hammingdistance 
                 || this.manhattandistance != that.manhattandistance) return false;
         
-        for (int i = 0; i < N; i++) {
-            for (int j = 0; j < N; j++) {
-                if (this.tiles[i][j] != that.tiles[i][j]) return false; 
-            }
+        for (int i = 0; i < (N*N); i++) {
+            if (this.tiles[i] != that.tiles[i]) return false; 
         }
         
         return true;
     }
-    
+        
     // all neighboring boards
     public Iterable<Board> neighbors() {
         Queue<Board> neighborsq = new Queue<Board>();
-        int[][] tempblocks = new int[N][N];
-        copyBlocks(tempblocks);
         
         // Find neighbor by making one move down
-        if (blankrow != (N-1)) {
-            exch(tempblocks, blankrow, blankcol, blankrow+1, blankcol);
-            Board neighborboard = new Board(tempblocks);
+        if (blankidx < (N-1)*N) {
+            int swapidx = blankidx+N;
+            Board neighborboard = new Board(this, blankidx, swapidx);
             neighborsq.enqueue(neighborboard);
-            exch(tempblocks, blankrow, blankcol, blankrow+1, blankcol);
         }
         
         // Find neighbor by making one move to the right
-        if (blankcol != (N-1)) {
-            exch(tempblocks, blankrow, blankcol, blankrow, blankcol+1);
-            Board neighborboard = new Board(tempblocks);
+        if ((blankidx+1) % N != 0) {
+            int swapidx = blankidx+1;
+            Board neighborboard = new Board(this, blankidx, swapidx);
             neighborsq.enqueue(neighborboard);
-            exch(tempblocks, blankrow, blankcol, blankrow, blankcol+1);
+            
         }
         
         // Find neighbor by making one move up
-        if (blankrow != 0) {
-            exch(tempblocks, blankrow, blankcol, blankrow-1, blankcol);
-            Board neighborboard = new Board(tempblocks);
+        if (blankidx >= N) {
+            int swapidx = blankidx-N;
+            Board neighborboard = new Board(this, blankidx, swapidx);
             neighborsq.enqueue(neighborboard);
-            exch(tempblocks, blankrow, blankcol, blankrow-1, blankcol);
         }
         
         // Find neighbor by making one move to the left
-        if (blankcol != 0) {
-            exch(tempblocks, blankrow, blankcol-1, blankrow, blankcol);
-            Board neighborboard = new Board(tempblocks);
+        if (blankidx % N != 0) {
+            int swapidx = blankidx-1;
+            Board neighborboard = new Board(this, blankidx, swapidx);
             neighborsq.enqueue(neighborboard);
-            exch(tempblocks, blankrow, blankcol-1, blankrow, blankcol);
         }
         
         return neighborsq;
@@ -144,30 +167,14 @@ public class Board {
         s.append(N + "\n");
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
-                s.append(String.format("%2d ", tiles[i][j]));
+                s.append(String.format("%2d ", tiles[(i*N)+j]));
             }
             s.append("\n");
         }
         return s.toString();
     }
     
-    private void copyBlocks(int[][] blocks) {
-        for (int i = 0; i < N; ++i) {
-            for (int j = 0; j < N; ++j) {
-                blocks[i][j] = tiles[i][j];
-            }
-        }
-    }
     
-    private void exch(int[][] board, int firstrow, int firstcol, 
-                      int secondrow, int secondcol) 
-    {
-        int temp = board[firstrow][firstcol];
-        board[firstrow][firstcol] = board[secondrow][secondcol];
-        board[secondrow][secondcol] = temp;
-    }
-    
-    /*
     // unit tests (not graded)
     public static void main(String[] args) {
         
@@ -184,14 +191,20 @@ public class Board {
         StdOut.println(initial.toString());
         StdOut.println("Hamming: "+initial.hamming());
         StdOut.println("Manhattan: " + initial.manhattan());
+        
         StdOut.println("Neighbors: ");
         for (Board b : initial.neighbors()) {
             StdOut.println(b.toString());
+            StdOut.println("Neighbors Hamming: "+b.hamming());
+            StdOut.println("Neighbors Manhattan: " +b.manhattan());
         }
+        
         Board twin = initial.twin();
         StdOut.println("Twin: ");
         StdOut.println(twin.toString());
+        StdOut.println("Twin Hamming: "+twin.hamming());
+        StdOut.println("Twin Manhattan: " + twin.manhattan());
     }
-    */
+    
 }
 

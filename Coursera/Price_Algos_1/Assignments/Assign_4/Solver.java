@@ -72,7 +72,9 @@ public class Solver {
             for (Board neighbor : nextnode.getBoard().neighbors()) {
                 // Critical optimization: Enqueue a neighbor only if its board 
                 // is the different from the board of the previous search node.
-                if (!neighbor.equals(nextnode.getBoard())) {
+                if (nextnode.getParent() == null 
+                        || !neighbor.equals(nextnode.getParent().getBoard())) 
+                {
                     SearchNode neighbornode = new SearchNode(neighbor, nextnode);
                     boardminpq.insert(neighbornode);
                     //inserts++;
@@ -85,7 +87,8 @@ public class Solver {
             for (Board neighbor : twinnextnode.getBoard().neighbors()) {
                 // Critical optimization: Enqueue a neighbor only if its board 
                 // is the different from the board of the previous search node.
-                if (!neighbor.equals(twinnextnode.getBoard())) {
+                if (twinnextnode.getParent() == null 
+                        || !neighbor.equals(twinnextnode.getParent().getBoard())) {
                     SearchNode neighbornode = new SearchNode(neighbor, twinnextnode);
                     twinminpq.insert(neighbornode);
                     //inserts++;
