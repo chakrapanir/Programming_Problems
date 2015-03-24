@@ -11,10 +11,12 @@ public class Solver {
        private final SearchNode parentnode;  // previous search node
        private final int mandistance;
        private final int manpriority;
+       private final boolean istwin;
        
-       public SearchNode(Board board, SearchNode parent) {
+       public SearchNode(Board board, SearchNode parent, boolean istwin) {
            this.board = board;
            this.parentnode = parent;
+           this.istwin = istwin; 
            if (parent != null) this.moves = parent.getMoves()+1;
            else this.moves = 0;
            this.mandistance = this.board.manhattan();
@@ -28,6 +30,8 @@ public class Solver {
            if (this.manpriority > that.manpriority) return +1;
            if (this.mandistance < that.mandistance) return -1;
            if (this.mandistance > that.mandistance) return +1;
+           if (this.board.hamming() < that.board.hamming()) return -1;
+           if (this.board.hamming() > that.board.hamming()) return +1;
            return 0;
        }
        // return board
@@ -44,6 +48,11 @@ public class Solver {
        public SearchNode getParent() {
            return parentnode;
        }
+       
+       // return true if the search node belongs to twin
+       public boolean isTwin() {
+           return istwin;
+       }
     }
     
     private class ManPriorityOrder implements Comparator<SearchNode> {
@@ -56,58 +65,45 @@ public class Solver {
     public Solver(Board initial) {
         Comparator<SearchNode> MANPRIORITYORDER = new ManPriorityOrder();
         MinPQ<SearchNode> boardminpq = new MinPQ<SearchNode>(MANPRIORITYORDER);
-        MinPQ<SearchNode> twinminpq = new MinPQ<SearchNode>(MANPRIORITYORDER);
-        SearchNode nextnode = new SearchNode(initial, null);
-        SearchNode twinnextnode = new SearchNode(initial.twin(), null);
+        SearchNode nextnode = new SearchNode(initial, null, false);
         boardminpq.insert(nextnode);
-        twinminpq.insert(twinnextnode);
+        boardminpq.insert(new SearchNode(initial.twin(), null, true));
         pathstack = new Stack<Board>();
-        //int inserts = 1, del = 0;
+        int insert = 2, del = 0;
         
-        // Loop until the goal game board for the initial borad 
-        // or its twin is reached
-        while (!nextnode.getBoard().isGoal() && !twinnextnode.getBoard().isGoal()) {
+        // Loop until the next board from MinPQ is the goal board
+        while (!nextnode.getBoard().isGoal()) {
             nextnode = boardminpq.delMin();
-            //del++;
+            del++;
             for (Board neighbor : nextnode.getBoard().neighbors()) {
                 // Critical optimization: Enqueue a neighbor only if its board 
                 // is the different from the board of the previous search node.
                 if (nextnode.getParent() == null 
                         || !neighbor.equals(nextnode.getParent().getBoard())) 
                 {
-                    SearchNode neighbornode = new SearchNode(neighbor, nextnode);
+                    SearchNode neighbornode = new SearchNode(neighbor, nextnode, 
+                                                             nextnode.isTwin());
                     boardminpq.insert(neighbornode);
-                    //inserts++;
-                }
-            }
-            
-            // run the A* algorithm on the twin board
-            twinnextnode = twinminpq.delMin();
-            //del++;
-            for (Board neighbor : twinnextnode.getBoard().neighbors()) {
-                // Critical optimization: Enqueue a neighbor only if its board 
-                // is the different from the board of the previous search node.
-                if (twinnextnode.getParent() == null 
-                        || !neighbor.equals(twinnextnode.getParent().getBoard())) {
-                    SearchNode neighbornode = new SearchNode(neighbor, twinnextnode);
-                    twinminpq.insert(neighbornode);
-                    //inserts++;
+                    insert++;
                 }
             }
         }
         
-        if (nextnode.getBoard().isGoal()) {
+        if (nextnode.isTwin()) {
+            moves = -1;
+            solvable = false;
+            pathstack = null;
+            
+        } else {
             moves = nextnode.getMoves();
             solvable = true;
             while (nextnode != null) {
                 pathstack.push(nextnode.getBoard());
                 nextnode = nextnode.getParent();
             }
-        } else {
-            moves = -1;
-            solvable = false;
-            pathstack = null;
-        }   
+        }  
+        
+       StdOut.println("Insert: "+insert+", Delete: "+del); 
     }
     
     // is the initial board solvable?
