@@ -6,13 +6,14 @@ public class KdTree {
     
     private static class Node {
         private Point2D p;      // the point
-        private RectHV rect;    // the axis-aligned rectangle corresponding to this node
+        private RectHV rect;    // the axis-aligned rectangle corresponding 
+                                // to this node
         private Node lb;        // the left/bottom subtree
         private Node rt;        // the right/top subtree
         
-        public Node(Point2D p, RectHV rect) {
+        public Node(Point2D p) {
             this.p = p;
-            this.rect = rect;
+            this.rect = null;
         }
     }
     
@@ -24,7 +25,7 @@ public class KdTree {
     
     // is the set empty?
     public boolean isEmpty() {
-        return size()==0;
+        return (size() == 0);
         
     }
     
@@ -33,29 +34,46 @@ public class KdTree {
         return size;
     }
     
-    private Node insert(Node n, Point2D p, RectHV rect, boolean orientation) {
+    private int compare(Point2D p1, Point2D p2, boolean orientation) {
+        if (orientation == VERTICAL) {
+            if (p1.x() < p2.x()) return -1;
+            if (p1.x() > p2.x()) return +1;
+        } else {
+            if (p1.y() < p2.y()) return -1;
+            if (p1.y() > p2.y()) return +1;
+        }
+        return 0;
+    }
+    
+    private Node insert(Node n, Point2D p, boolean orientation) {
         if (n == null) {
-            StdOut.println("Point: "+p.toString()+", Rect: "+rect.toString());
-            return new Node(p, rect);
+            size++;
+            return new Node(p);
         }
         if (!p.equals(n.p)) {
-            RectHV newrect;
-            if (orientation == VERTICAL) {
-                if (p.X_ORDER.compare(p, n.p) < 0) {
-                    newrect = new RectHV(rect.xmin(), rect.ymin(), n.p.x(), rect.ymax());
-                    n.lb = insert(n.lb, p, newrect, HORIZONTAL);
-                } else {
-                    newrect = new RectHV(n.p.x(), rect.ymin(), rect.xmax(), rect.ymax());
-                    n.rt = insert(n.rt, p, newrect, HORIZONTAL);
+            int cmp = compare(p, n.p, orientation);
+            if (cmp < 0) {
+                n.lb = insert(n.lb, p, !orientation);
+                if (n.lb.rect == null) {
+                    if (orientation == VERTICAL) {
+                        n.lb.rect = new RectHV(n.rect.xmin(), n.rect.ymin()
+                                              , n.p.x(), n.rect.ymax());
+                    } else {
+                        n.lb.rect = new RectHV(n.rect.xmin(), n.rect.ymin()
+                                              , n.rect.xmax(), n.p.y());
+                    }
                 }
             } else {
-                if (p.Y_ORDER.compare(p, n.p) < 0) {
-                    newrect = new RectHV(rect.xmin(), rect.ymin(), rect.xmax(), n.p.y());
-                    n.lb = insert(n.lb, p, newrect, VERTICAL);
-                } else {
-                    newrect = new RectHV(rect.xmin(), n.p.y(), rect.xmax(), rect.ymax());
-                    n.rt = insert(n.rt, p, newrect, VERTICAL);
-                }
+                n.rt = insert(n.rt, p, !orientation);
+                if (n.rt.rect == null) {
+                    if (orientation == VERTICAL) {
+                        n.rt.rect = new RectHV(n.p.x(), n.rect.ymin()
+                                              , n.rect.xmax(), n.rect.ymax());
+                    } else {
+                        n.rt.rect = new RectHV(n.rect.xmin(), n.p.y()
+                                              , n.rect.xmax(), n.rect.ymax());
+                    }
+                }   
             }
         }
         return n;
@@ -63,27 +81,34 @@ public class KdTree {
     
     // add the point to the set (if it is not already in the set)
     public void insert(Point2D p) {
-        RectHV rect = new RectHV(0, 0, 1, 1);
-        root = insert(root, p, rect, VERTICAL);
+        if (p == null) throw new NullPointerException("Null Point Passed");
+        if (isEmpty()) {
+            RectHV rect = new RectHV(0, 0, 1, 1);
+            root = new Node(p);
+            root.rect = rect;
+            size++;
+        } else {
+            root = insert(root, p, VERTICAL);
+        }
     }
     
     private boolean contains(Node n, Point2D p, boolean orientation) {
-        if (n==null) return false;
+        if (n == null) return false;
         if (p.equals(n.p)) return true;
-        int cmp;
-        if (orientation == VERTICAL) cmp = p.X_ORDER.compare(p,n.p);
-        else cmp = p.Y_ORDER.compare(p,n.p);
-        if (cmp < 0) return contains(n.lb, p, !orientation);
-        else return contains(n.rt, p, !orientation);
+        if (compare(p, n.p, orientation) < 0) 
+            return contains(n.lb, p, !orientation);
+        else 
+            return contains(n.rt, p, !orientation);
     }
     
     // does the set contain point p?
     public boolean contains(Point2D p) {
+        if (p == null) throw new NullPointerException("Null Point Passed");
         return contains(root, p, VERTICAL);
     }
     
     private void draw(Node n, boolean orientation) {
-        if (n==null) return;
+        if (n == null) return;
         StdDraw.setPenColor(StdDraw.BLACK);
         // make the points a bit larger
         StdDraw.setPenRadius(0.01);  
@@ -107,34 +132,62 @@ public class KdTree {
     }
     
     private void range(Node n, RectHV rect, Queue<Point2D> rangeq) {
-        if (n==null) return;
+        if (n == null) return;
         // Point in the node lies inside the query rectangle
         // Insert the point to the range queue
         if (rect.contains(n.p)) 
             rangeq.enqueue(n.p);
-        // Query rectangle intersects the rectange corressponding to left-bottom node
-        // Recursively serach bottom-left subtree
-        if (n.lb!=null && rect.intersects(n.lb.rect))
+        if (rect.intersects(n.rect)) {
             range(n.lb, rect, rangeq);
-        // Query rectangle intersects the rectange corressponding to right-top node
-        // Recursively serach right-top subtree
-        else if (n.rt!=null && rect.intersects(n.rt.rect))
             range(n.rt, rect, rangeq);
+        }
     }
     
     // all points that are inside the rectangle
     public Iterable<Point2D> range(RectHV rect) {
+        if (rect == null) throw new NullPointerException("Null Rect Passed");
         Queue<Point2D> rangeq =  new Queue<Point2D>();
         range(root, rect, rangeq);
         return rangeq;
     }
     
-    /*
+    private Point2D nearest(Node n, Point2D p, Point2D nearestpoint
+                           , boolean orientation) 
+    {
+        if (n == null) return nearestpoint;
+        double nearestdist = nearestpoint.distanceSquaredTo(p);
+        double curdistance = n.p.distanceSquaredTo(p);
+        Node firstnode, secondnode;
+        Point2D closestpoint = nearestpoint;
+        if (curdistance < nearestdist) {
+            nearestdist = curdistance;
+            closestpoint = n.p;
+        }
+        
+        if (compare(p, n.p, orientation) < 0) {
+            firstnode = n.lb;
+            secondnode = n.rt;
+        } else {
+            firstnode = n.rt;
+            secondnode = n.lb;
+        }
+        
+        if (firstnode != null 
+                && firstnode.rect.distanceSquaredTo(p) < nearestdist)
+            closestpoint = nearest(firstnode, p, closestpoint, !orientation);
+        if (secondnode != null 
+                && secondnode.rect.distanceSquaredTo(p) < nearestdist)
+            closestpoint = nearest(secondnode, p, closestpoint, !orientation);
+            
+        return closestpoint;
+    }
+    
     // a nearest neighbor in the set to point p; null if the set is empty
     public Point2D nearest(Point2D p) {
-       
+        if (p == null) throw new NullPointerException("Null Point Passed");
+        if (isEmpty()) return null;
+        return nearest(root, p, root.p, VERTICAL);
     }
-    */
     
     public static void main(String[] args) {
         String filename = args[0];
@@ -148,7 +201,6 @@ public class KdTree {
             double y = in.readDouble();
             Point2D p = new Point2D(x, y);
             kdtree.insert(p);
-            StdOut.println(p.toString()+"->"+kdtree.contains(p));
         }
         
         StdDraw.clear();
